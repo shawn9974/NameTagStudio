@@ -1,32 +1,63 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TagConfig, TagData } from '../types';
-import { DEFAULT_LOGO_SVG } from '../constants';
+import { DEFAULT_LOGO_SVG, FONT_STACKS } from '../constants';
 
 interface TagPreviewProps {
   tag: TagData;
   config: TagConfig;
 }
 
+// Natural pixel size of an image, needed to scale the background image the same way the PDF does.
+const useImageSize = (src: string | null) => {
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => setSize({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+    img.src = src;
+    return () => { img.onload = null; };
+  }, [src]);
+  return size;
+};
+
 export const TagPreview: React.FC<TagPreviewProps> = ({ tag, config }) => {
   const bannerRatio = 0.18;
   const bannerHeightPercent = bannerRatio * 100;
-  
+
   const cornerLogo = config.logoDataCorner || DEFAULT_LOGO_SVG;
   const backgroundLogo = config.logoDataBackground || DEFAULT_LOGO_SVG;
+
+  // At 100% the background image covers the whole tag; smaller values shrink it around the center
+  const bgSize = useImageSize(config.logoSettings.background ? backgroundLogo : null);
+  const bgScale = bgSize
+    ? Math.max(config.tagWidth / bgSize.w, config.tagHeight / bgSize.h) * config.backgroundImageSize / 100
+    : 0;
+  const cornerLogoSize = config.tagHeight * config.cornerLogoSize / 100;
 
   return (
     <div 
       className={`relative flex flex-col items-center justify-center overflow-hidden w-full h-full bg-white transition-shadow ${config.showBorders ? 'border border-dashed border-slate-200' : ''}`}
       style={{ 
         backgroundColor: '#ffffff', // Badge background is now fixed to white as requested
-        fontFamily: config.fontFamily 
+        fontFamily: FONT_STACKS[config.fontFamily] || config.fontFamily
       }}
     >
-      {/* Background Logo - Now fits the whole badge */}
-      {config.logoSettings.background && (
-        <div className="absolute inset-0 pointer-events-none opacity-[0.12]">
-          <img src={backgroundLogo} className="w-full h-full object-cover" alt="" />
+      {/* Background Logo - centered, scaled relative to covering the whole badge */}
+      {config.logoSettings.background && bgSize && (
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: config.backgroundImageOpacity / 100 }}>
+          <img
+            src={backgroundLogo}
+            className="absolute max-w-none"
+            style={{
+              width: `${bgSize.w * bgScale}mm`,
+              height: `${bgSize.h * bgScale}mm`,
+              left: '50%',
+              top: `calc(50% + ${config.tagHeight * config.backgroundImageOffsetY / 100}mm)`,
+              transform: 'translate(-50%, -50%)'
+            }}
+            alt=""
+          />
         </div>
       )}
 
@@ -89,13 +120,19 @@ export const TagPreview: React.FC<TagPreviewProps> = ({ tag, config }) => {
         <div 
           className={`absolute right-[3mm] pointer-events-none z-10`}
           style={{
-            width: '15%',
-            height: '15%',
+            width: `${cornerLogoSize}mm`,
+            height: `${cornerLogoSize}mm`,
             top: config.bannerPosition === 'bottom' ? '3mm' : 'auto',
-            bottom: config.bannerPosition === 'bottom' ? 'auto' : '3mm'
+            bottom: config.bannerPosition === 'bottom' ? 'auto' : '3mm',
+            opacity: config.cornerLogoOpacity / 100
           }}
         >
-          <img src={cornerLogo} className="w-full h-full object-contain" alt="" />
+          <img
+            src={cornerLogo}
+            className="w-full h-full object-contain"
+            style={{ objectPosition: config.bannerPosition === 'bottom' ? 'right top' : 'right bottom' }}
+            alt=""
+          />
         </div>
       )}
     </div>

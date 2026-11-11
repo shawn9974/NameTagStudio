@@ -8,6 +8,10 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1KdSKNDcwJR3f7_a8-_dIuXtfcn39spw9
 
+## Use without installing anything
+
+Open [Name Tag Studio.html](Name%20Tag%20Studio.html) in a browser. It is a single self-contained file that works offline; no server, Node.js or API key is needed.
+
 ## Run Locally
 
 **Prerequisites:**  Node.js
@@ -15,6 +19,10 @@ View your app in AI Studio: https://ai.studio/apps/drive/1KdSKNDcwJR3f7_a8-_dIuX
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Run the app:
    `npm run dev`
+
+## Rebuild the single HTML file
+
+1. `npm run build:standalone`
+2. Copy `standalone/index.html` to `Name Tag Studio.html`

@@ -52,6 +52,13 @@ const ColorSelector: React.FC<{ label: string; value: string; onChange: (val: st
   </div>
 );
 
+const PercentSlider: React.FC<{ label: string; value: number; min: number; max: number; onChange: (val: number) => void }> = ({ label, value, min, max, onChange }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-500 uppercase">{label}</label><span className="text-[10px] font-bold text-blue-600">{value}%</span></div>
+    <input type="range" min={min} max={max} step="1" value={value} onChange={(e) => onChange(parseInt(e.target.value))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+  </div>
+);
+
 const App: React.FC = () => {
   const [config, setConfig] = useState<TagConfig>(DEFAULT_CONFIG);
   const [namesText, setNamesText] = useState<string>("John Doe, Speaker\nJane Smith, Attendee\nAlice Johnson, Staff\nBob Wilson, VIP\nCharlie Brown, Student\nDaisy Miller, Press\nEva Green, Speaker\nFrank Castle, Security");
@@ -244,6 +251,12 @@ const App: React.FC = () => {
                         <button onClick={() => cornerInputRef.current?.click()} className="text-[11px] font-bold text-blue-600 hover:underline">Upload Image</button>
                       </div>
                     </div>
+                    {config.logoSettings.corner && (
+                      <div className="space-y-3 pt-1">
+                        <PercentSlider label="Size (of tag height)" value={config.cornerLogoSize} min={5} max={60} onChange={(v) => handleConfigChange('cornerLogoSize', v)} />
+                        <PercentSlider label="Opacity" value={config.cornerLogoOpacity} min={0} max={100} onChange={(v) => handleConfigChange('cornerLogoOpacity', v)} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Background Logo Upload */}
@@ -269,6 +282,13 @@ const App: React.FC = () => {
                         <button onClick={() => bgInputRef.current?.click()} className="text-[11px] font-bold text-blue-600 hover:underline">Upload Image</button>
                       </div>
                     </div>
+                    {config.logoSettings.background && (
+                      <div className="space-y-3 pt-1">
+                        <PercentSlider label="Size (100% = fill tag)" value={config.backgroundImageSize} min={10} max={100} onChange={(v) => handleConfigChange('backgroundImageSize', v)} />
+                        <PercentSlider label="Opacity" value={config.backgroundImageOpacity} min={0} max={100} onChange={(v) => handleConfigChange('backgroundImageOpacity', v)} />
+                        <PercentSlider label="Vertical Shift (- up / + down)" value={config.backgroundImageOffsetY} min={-100} max={100} onChange={(v) => handleConfigChange('backgroundImageOffsetY', v)} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>

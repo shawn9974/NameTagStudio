@@ -10,6 +10,7 @@ export const DEFAULT_LOGO_SVG = `data:image/svg+xml;base64,${btoa(`
 `)}`;
 
 export const COLOR_PRESETS = [
+  '#002b60', // Brand Blue (RGB 0/43/96, CMYK 100/60/0/60, PANTONE P108-16C)
   '#2563eb', // Blue
   '#dc2626', // Red
   '#16a34a', // Green
@@ -20,13 +21,18 @@ export const COLOR_PRESETS = [
   '#000000', // Black
 ];
 
+// Exact print values (C, M, Y, K from 0 to 1) used in the PDF instead of converting from RGB
+export const CMYK_COLORS: Record<string, [number, number, number, number]> = {
+  '#002b60': [1, 0.6, 0, 0.6]
+};
+
 export const DEFAULT_CONFIG: TagConfig = {
   paperSize: PaperSize.A4,
   layout: LayoutType.GRID_2X4,
   diyCols: 2,
   diyRows: 4,
-  primaryColor: '#2563eb',
-  textColor: '#1e293b',
+  primaryColor: '#002b60',
+  textColor: '#000000',
   bannerTextColor: '#ffffff',
   backgroundColor: '#ffffff',
   nameFontSize: 28,
@@ -45,7 +51,12 @@ export const DEFAULT_CONFIG: TagConfig = {
     background: false
   },
   logoDataCorner: null,
-  logoDataBackground: null
+  logoDataBackground: null,
+  cornerLogoSize: 15,
+  cornerLogoOpacity: 100,
+  backgroundImageSize: 100,
+  backgroundImageOpacity: 12,
+  backgroundImageOffsetY: 0
 };
 
 export const FONTS = [
@@ -53,6 +64,13 @@ export const FONTS = [
   { name: 'Times New Roman', value: 'Times' },
   { name: 'Courier', value: 'Courier' }
 ];
+
+// CSS font lists, with system fonts that cover Chinese, Japanese and Korean
+export const FONT_STACKS: Record<string, string> = {
+  Helvetica: 'Helvetica, Arial, "Microsoft YaHei", "Microsoft JhengHei", "PingFang SC", "Noto Sans CJK SC", "Malgun Gothic", sans-serif',
+  Times: 'Times, "Times New Roman", SimSun, PMingLiU, "Songti SC", "Noto Serif CJK SC", "Batang", serif',
+  Courier: 'Courier, "Courier New", "Microsoft YaHei", "Microsoft JhengHei", "PingFang SC", "Noto Sans CJK SC", "Malgun Gothic", monospace'
+};
 
 export const LAYOUTS = {
   [LayoutType.GRID_2X4]: { cols: 2, rows: 4, count: 8 },

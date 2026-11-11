@@ -41,6 +41,11 @@ export interface TagConfig {
   logoSettings: LogoSettings;
   logoDataCorner: string | null;
   logoDataBackground: string | null;
+  cornerLogoSize: number;         // % of tag height
+  cornerLogoOpacity: number;      // 0-100
+  backgroundImageSize: number;    // % where 100 = image covers the whole tag
+  backgroundImageOpacity: number; // 0-100
+  backgroundImageOffsetY: number; // % of tag height, positive moves down
 }
 
 export interface TagData {
