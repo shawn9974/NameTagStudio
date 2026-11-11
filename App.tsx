@@ -68,7 +68,8 @@ const App: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [paperScale, setPaperScale] = useState(0.5);
 
-  const tags = useMemo(() => {
+  // A line like ", Staff" gives a tag with no name
+  const guests = useMemo(() => {
     return namesText.split('\n')
       .filter(line => line.trim() !== '')
       .map(line => {
@@ -89,6 +90,11 @@ const App: React.FC = () => {
 
   const paperDim = PAPER_DIMENSIONS[config.paperSize];
   const totalTagsPerPage = layout.cols * layout.rows;
+  // An empty guest list gives one full page of blank tags (banner and logos only)
+  const tags = useMemo(
+    () => guests.length > 0 ? guests : Array.from({ length: totalTagsPerPage }, () => ({ name: '', subtitle: '' })),
+    [guests, totalTagsPerPage]
+  );
   const totalPages = Math.ceil(tags.length / totalTagsPerPage);
   const firstPageTags = tags.slice(0, totalTagsPerPage);
 
@@ -208,7 +214,7 @@ const App: React.FC = () => {
                     className="w-full h-48 p-4 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none font-mono group-hover:bg-white shadow-inner"
                   />
                   <div className="absolute bottom-3 right-3 bg-white/90 px-2 py-1 rounded-lg text-[10px] text-slate-500 border border-slate-100 shadow-sm backdrop-blur-sm">
-                    {tags.length} entries
+                    {guests.length > 0 ? `${guests.length} entries` : 'Empty: blank tags'}
                   </div>
                 </div>
               </section>
@@ -504,7 +510,7 @@ const App: React.FC = () => {
             <div className="flex gap-4">
                 <div className="flex items-center gap-2 group cursor-default">
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Guests</span>
-                  <span className="text-[11px] font-black text-slate-900 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg shadow-sm">{tags.length}</span>
+                  <span className="text-[11px] font-black text-slate-900 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg shadow-sm">{guests.length}</span>
                 </div>
                 <div className="flex items-center gap-2 group cursor-default">
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">Sheets</span>

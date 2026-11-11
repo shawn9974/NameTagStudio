@@ -99,7 +99,7 @@ export const TagPreview: React.FC<TagPreviewProps> = ({ tag, config }) => {
             marginBottom: tag.subtitle ? `${config.nameSubtitleGap * 0.3527}mm` : '0'
           }}
         >
-          {tag.name || 'Your Name'}
+          {tag.name}
         </h2>
         
         {tag.subtitle && (
