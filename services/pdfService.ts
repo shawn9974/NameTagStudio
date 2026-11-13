@@ -73,6 +73,56 @@ const drawText = (
   );
 };
 
+// Characters a browser may wrap between without a space (Chinese, Japanese, Korean)
+const BREAK_ANYWHERE = /[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]/;
+const TOKEN = /\s+|[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]|[^\sᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]+/g;
+
+let measureContext: CanvasRenderingContext2D | null = null;
+
+// Splits text into lines no wider than maxWidth (mm), the way the preview wraps it: at spaces and
+// between CJK characters. With breakWords, a single word wider than a line is split as well.
+const wrapText = (
+  text: string,
+  maxWidth: number,
+  fontSize: number,
+  fontStyle: 'normal' | 'bold',
+  fontFamily: string,
+  breakWords: boolean
+): string[] => {
+  if (!measureContext) measureContext = document.createElement('canvas').getContext('2d')!;
+  // Measure with the same fonts the preview uses, so lines break at the same places
+  measureContext.font = `${fontStyle} ${fontSize * PT_TO_MM * TEXT_PX_PER_MM}px ${FONT_STACKS[fontFamily] || 'sans-serif'}`;
+  const width = (s: string) => measureContext!.measureText(s).width / TEXT_PX_PER_MM;
+
+  const lines: string[] = [];
+  let line = '';
+  for (const token of text.match(TOKEN) || []) {
+    if (/^\s/.test(token)) {
+      if (line) line += ' ';
+      continue;
+    }
+    if (width(line + token) <= maxWidth) {
+      line += token;
+      continue;
+    }
+    if (line.trim()) lines.push(line.trim());
+    line = '';
+    if (breakWords && !BREAK_ANYWHERE.test(token) && width(token) > maxWidth) {
+      for (const char of Array.from(token)) {
+        if (line && width(line + char) > maxWidth) {
+          lines.push(line);
+          line = '';
+        }
+        line += char;
+      }
+    } else {
+      line = token;
+    }
+  }
+  if (line.trim()) lines.push(line.trim());
+  return lines;
+};
+
 interface LoadedImage {
   data: string;
   w: number;
@@ -185,19 +235,29 @@ export const generateNameTagPDF = async (tags: TagData[], config: TagConfig) => 
     // 3. Content Area
     const contentAreaHeight = config.bannerPosition === 'none' ? tagHeight : (tagHeight - bannerHeight);
     const contentAreaY = config.bannerPosition === 'top' ? (y + bannerHeight) : y;
+    // Same as the preview: text area is 90% of the tag width, lines are one font size tall,
+    // name lines, gap, subtitle lines, all centered vertically
+    const textWidth = tagWidth * 0.9;
+    const nameLines = wrapText(tag.name, textWidth, config.nameFontSize, 'bold', config.fontFamily, true);
+    const subtitleLines = tag.subtitle
+      ? wrapText(tag.subtitle, textWidth, config.subtitleFontSize, 'normal', config.fontFamily, false)
+      : [];
     const nameHeight = config.nameFontSize * PT_TO_MM;
-    const subtitleHeight = tag.subtitle ? (config.subtitleFontSize * PT_TO_MM) : 0;
+    const subtitleHeight = config.subtitleFontSize * PT_TO_MM;
     const gapHeight = tag.subtitle ? (config.nameSubtitleGap * PT_TO_MM) : 0;
-    const totalContentHeight = nameHeight + subtitleHeight + gapHeight;
+    const totalContentHeight = nameLines.length * nameHeight + gapHeight + subtitleLines.length * subtitleHeight;
     const contentCenterY = contentAreaY + (contentAreaHeight / 2);
-    const nameY = contentCenterY - (totalContentHeight / 2) + nameHeight * 0.8;
-    drawText(doc, tag.name, x + tagWidth / 2, nameY, config.nameFontSize, 'bold', config.textColor, config.fontFamily);
+    const contentTop = contentCenterY - (totalContentHeight / 2);
+    nameLines.forEach((line, i) => {
+      const lineY = contentTop + i * nameHeight + nameHeight * 0.8;
+      drawText(doc, line, x + tagWidth / 2, lineY, config.nameFontSize, 'bold', config.textColor, config.fontFamily);
+    });
 
-    if (tag.subtitle) {
-      // Same stacking as the preview: name line, gap, subtitle line
-      const subtitleY = nameY + nameHeight * 0.2 + gapHeight + (subtitleHeight * 0.85);
-      drawText(doc, tag.subtitle, x + tagWidth / 2, subtitleY, config.subtitleFontSize, 'normal', config.textColor, config.fontFamily);
-    }
+    const subtitleTop = contentTop + nameLines.length * nameHeight + gapHeight;
+    subtitleLines.forEach((line, i) => {
+      const lineY = subtitleTop + i * subtitleHeight + subtitleHeight * 0.85;
+      drawText(doc, line, x + tagWidth / 2, lineY, config.subtitleFontSize, 'normal', config.textColor, config.fontFamily);
+    });
 
     // 4. Corner Logo
     if (cornerImage) {
